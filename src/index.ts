@@ -3,8 +3,8 @@ import btoa from 'btoa';
 
 import DEBUG from 'debug';
 import Protocol from 'devtools-protocol';
-import { Page } from 'puppeteer/lib/cjs/puppeteer/common/Page';
-import { CDPSession } from 'puppeteer/lib/cjs/puppeteer/common/Connection';
+import { Page } from 'puppeteer';
+import { CDPSession } from 'puppeteer';
 import pick from 'lodash.pick';
 import { encode } from 'punycode';
 
@@ -75,7 +75,7 @@ export class InterceptionHandler {
   async initialize() {
     const client = await this.page.target().createCDPSession();
     await client.send('Fetch.enable', { patterns: this.patterns });
-    client.on('Fetch.requestPaused', async (event: Protocol.Fetch.RequestPausedEvent) => {
+    client.on('Fetch.requestPaused', async (event/* Protocol.Fetch.RequestPausedEvent */) => {
       const { requestId, request } = event;
 
       if (this.disabled) {
@@ -88,8 +88,8 @@ export class InterceptionHandler {
 
       if (this.eventHandlers.onInterception) {
         let errorReason: Protocol.Network.ErrorReason = 'Aborted';
-        let shouldContinue = true;
-        let fulfill: undefined | (() => Promise<void>) = undefined;
+        let shouldContinue: boolean = true;
+        let fulfill: undefined | (() => Promise<void>) | any= undefined;
         const control = {
           abort: (msg: Protocol.Network.ErrorReason) => {
             shouldContinue = false;
@@ -113,7 +113,7 @@ export class InterceptionHandler {
           },
         };
 
-        await this.eventHandlers.onInterception(event, control);
+        await this.eventHandlers.onInterception(event as Interceptor.OnInterceptionEvent, control);
         if (!shouldContinue) {
           debug(`Aborting request ${requestId} with reason "${errorReason}"`);
           await client.send('Fetch.failRequest', { requestId, errorReason });

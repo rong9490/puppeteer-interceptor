@@ -1,11 +1,11 @@
-import puppeteer from 'puppeteer/lib/cjs/puppeteer';
+import puppeteer from 'puppeteer';
 import { Interceptor, patterns, intercept } from '../src';
 
 import assert from 'assert';
 
 import { start, TestServer } from '@jsoverson/test-server';
-import { Browser } from 'puppeteer/lib/cjs/puppeteer/common/Browser';
-import { Page } from 'puppeteer/lib/cjs/puppeteer/common/Page';
+import { Browser } from 'puppeteer';
+import { Page } from 'puppeteer';
 
 describe('interceptor', function () {
   let browser: Browser, context, page: Page;
@@ -17,8 +17,8 @@ describe('interceptor', function () {
   });
 
   beforeEach(async () => {
-    context = await browser.createIncognitoBrowserContext();
-    page = await browser.newPage();
+    context = await browser.createBrowserContext();
+    page = await context.newPage();
   });
 
   afterEach(async () => {
@@ -92,7 +92,7 @@ describe('interceptor', function () {
   });
 
   it('should pass response to onResponseReceived', async function () {
-    const promise = new Promise((resolve, reject) => {
+    const promise = new Promise<void>((resolve, reject) => {
       intercept(page, patterns.Script('*dynamic.js'), {
         onResponseReceived: (event: Interceptor.OnResponseReceivedEvent) => {
           assert(event.response.body.match('Dynamic'));
