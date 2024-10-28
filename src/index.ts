@@ -7,6 +7,7 @@ import { Page } from 'puppeteer';
 import { CDPSession } from 'puppeteer';
 import pick from 'lodash.pick';
 import { encode } from 'punycode';
+import { utf8ToBase64, base64ToUtf8 } from './utils';
 
 const debug = DEBUG('puppeteer-interceptor');
 
@@ -75,7 +76,7 @@ export class InterceptionHandler {
   async initialize() {
     const client = await this.page.target().createCDPSession();
     await client.send('Fetch.enable', { patterns: this.patterns });
-    client.on('Fetch.requestPaused', async (event/* Protocol.Fetch.RequestPausedEvent */) => {
+    client.on('Fetch.requestPaused', async (event /* Protocol.Fetch.RequestPausedEvent */) => {
       const { requestId, request } = event;
 
       if (this.disabled) {
@@ -89,7 +90,7 @@ export class InterceptionHandler {
       if (this.eventHandlers.onInterception) {
         let errorReason: Protocol.Network.ErrorReason = 'Aborted';
         let shouldContinue: boolean = true;
-        let fulfill: undefined | (() => Promise<void>) | any= undefined;
+        let fulfill: undefined | (() => Promise<void>) | any = undefined;
         const control = {
           abort: (msg: Protocol.Network.ErrorReason) => {
             shouldContinue = false;
@@ -136,7 +137,8 @@ export class InterceptionHandler {
             requestId,
           })) as Protocol.Fetch.GetResponseBodyResponse;
           const response: Interceptor.InterceptedResponse = {
-            body: responseCdp.base64Encoded ? atob(responseCdp.body) : responseCdp.body,
+            // body: responseCdp.base64Encoded ? atob(responseCdp.body) : responseCdp.body,
+            body: responseCdp.base64Encoded ? utf8ToBase64(responseCdp.body) : responseCdp.body,
             headers: event.responseHeaders,
             errorReason: event.responseErrorReason,
             statusCode: event.responseStatusCode,
